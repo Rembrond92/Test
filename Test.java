@@ -309,7 +309,7 @@ public class Test {
 
         list.clear();
 
-        try(BufferedReader fileReader = new BufferedReader(new FileReader(System.getProperty("user.dir") + "rating.txt"))) {
+        try(BufferedReader fileReader = new BufferedReader(new FileReader(System.getProperty("user.dir") + "/rating.txt"))) {
             while(fileReader.ready()) {
 
                 String[] line = fileReader.readLine().split(";");
@@ -325,7 +325,7 @@ public class Test {
 
     private static void writeFile() {
 
-        try(BufferedWriter fileWriter = new BufferedWriter(new FileWriter(System.getProperty("user.dir") + "rating.txt"))) {
+        try(BufferedWriter fileWriter = new BufferedWriter(new FileWriter(System.getProperty("user.dir") + "/rating.txt"))) {
             for(Player person: list) {
                 fileWriter.write("Имя-" + person.name
                         + "; Побед-" + person.victories
