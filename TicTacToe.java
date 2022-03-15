@@ -1,10 +1,32 @@
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import static java.lang.Thread.sleep;
 
 /*
  * Игра крестики-нолики
@@ -18,18 +40,21 @@ import java.util.Iterator;
  * Запрос на изменение имён игроков;
  */
 
-public class Test {
+public class TicTacToe {
 
-    private static BufferedReader reader;
-    private final int[][] map = new int[3][3];
-    private static Player playerOne, playerTwo;
-    private static final ArrayList<Player> list = new ArrayList<>();
-    private static Test game;
-    private static boolean exit = false, end = false;
+    static BufferedReader reader;
+    static int count = 0;
+    static int[][] map;
+    static Player playerOne, playerTwo;
+    final static ArrayList<Player> list = new ArrayList<>();
+    static TicTacToe game;
+    static boolean exit = false, end = false;
 
-    private Test(Player one, Player two) {
+    private TicTacToe(Player one, Player two) {
         playerOne = one;
         playerTwo = two;
+
+        map = new int[3][3];
     }
 
     public static void main(String[] args) {
@@ -43,40 +68,51 @@ public class Test {
             while(!exit) {
                 System.out.println(
                         "Начать новую игру? Введите: «н»\n"+
+                                "Посмотреть записи игр? Введите «з»\n"+
                                 "Посмотреть рейтинг игроков? Введите: «р»\n"+
                                 "Выйти из игры? Введите: «в»");
 
                 choice = reader.readLine();
 
                 switch (choice) {
+
                     case "н":
                         end = false;
                         start();
                         game();
                         writeFile();
+                        XmlFile.writeXml();
                         break;
+
                     case "р":
                         rating();
                         System.out.println(
-                                "Удалить игрока? Введите: «у»\n" +
-                                        "Обнулить рейтинг? Введите: «о»\n" +
+                                "Удалить игрока? Введите: «у»\n"+
+                                        "Обнулить рейтинг? Введите: «о»\n"+
                                         "Выйти в меню? Введите любой другой символ.");
 
                         choice = reader.readLine();
 
-                        if (choice.equals("у"))
+                        if(choice.equals("у"))
                             delete();
-                        else if (choice.equals("о"))
+                        else if(choice.equals("о"))
                             reset();
                         break;
+
+                    case "з":
+                        XmlFile.replay();
+                        break;
+
                     case "в":
                         exit = true;
                         break;
+
                     default:
                         System.out.println("Неверный выбор! Попробуйте ещё раз.");
                         break;
                 }
             }
+
             reader.close();
 
         } catch(Exception e) {
@@ -85,6 +121,7 @@ public class Test {
         }
     }
 
+    @SuppressWarnings("InstantiationOfUtilityClass")
     private static void start() throws Exception {
 
         if(game == null) {
@@ -102,22 +139,25 @@ public class Test {
                 login();
             }
         }
-        game = new Test(playerOne, playerTwo);
-    }
+    game = new TicTacToe(playerOne, playerTwo);
+    XmlFile.setPlayers(playerOne.name, playerTwo.name);
+}
 
     private static void login() throws Exception {
 
+        final String nameOne, nameTwo;
+
         System.out.println("Введите имя первого игрока.");
-        String nameOne = reader.readLine();
+        nameOne = reader.readLine();
         System.out.println("Введите имя второго игрока.");
-        String nameTwo = reader.readLine();
+        nameTwo = reader.readLine();
 
         for(Player person: list) {
             if(person.name.equals(nameOne))
-                playerOne = person;
+                playerOne = person;//new Player(nameOne, person.victories, person.defeats, person.draws);
 
             if(person.name.equals(nameTwo))
-                playerTwo = person;
+                playerTwo = person;//new Player(nameTwo, person.victories, person.defeats, person.draws);
         }
 
         if(playerOne == null) {
@@ -125,21 +165,27 @@ public class Test {
             list.add(playerOne);
         }
         if(playerTwo == null) {
-            playerTwo = new Player(nameTwo, 0, 0, 0);
+            playerTwo = new Player(nameTwo,
+                    0,
+                    0,
+                    0);
             list.add(playerTwo);
         }
     }
 
-    protected static void game() {
+    private static void game() {
 
         showMap();
-        int count = 0;
+        count = 0;
         while(!end) {
             for(int i = 1; i <= 2 && !end; i++) {
+
                 if(i == 1)
                     System.out.println("Первый игрок - " + playerOne.name + " делает ход. Введите номер свободной ячейки.");
                 else
                     System.out.println("Второй игрок - " + playerTwo.name + " делает ход. Введите номер свободной ячейки.");
+
+                XmlFile.setStep(count+1, i);
                 move(i);
 
                 if(++count == 9 && !end) {
@@ -147,6 +193,8 @@ public class Test {
 
                     playerOne.draws += 1;
                     playerTwo.draws += 1;
+
+                    XmlFile.gameResult(0, "");
 
                     end = true;
                     break;
@@ -157,7 +205,7 @@ public class Test {
 
     private static void move(int player) {
 
-        setMap(player);
+        setValue(player);
         showMap();
         testMap(player);
         if(end) {
@@ -165,27 +213,32 @@ public class Test {
                 System.out.println("Первый игрок " + playerOne.name + " победил!");
                 playerOne.victories += 1;
                 playerTwo.defeats += 1;
+
+                XmlFile.gameResult(1, playerOne.name);
             }
+
             if(player == 2) {
                 System.out.println("Второй игрок - " + playerTwo.name + " победил!");
                 playerTwo.victories += 1;
                 playerOne.defeats += 1;
+
+                XmlFile.gameResult(2, playerTwo.name);
             }
         }
     }
 
-    private static void showMap() {
+    public static void showMap() {
 
         int count = 1;
 
         for(int i = 0; i < 3; i++) {
             for(int j = 0; j < 3; j++) {
                 System.out.print("[");
-                if(game.map[i][j] == 0)
+                if(map[i][j] == 0)
                     System.out.print(count);
-                if(game.map[i][j] == 1)
+                if(map[i][j] == 1)
                     System.out.print("X");
-                if(game.map[i][j] == 2)
+                if(map[i][j] == 2)
                     System.out.print("O");
                 System.out.print("]");
                 count++;
@@ -194,66 +247,75 @@ public class Test {
         }
     }
 
-    private static void setMap(int player) {
+    private static void setValue(int player) {
 
         try{
             int set = Integer.parseInt(reader.readLine());
             int count = 1;
 
-            for(int i = 0; i < 3; i++) {
-                for(int j = 0; j < 3; j++) {
-                    if(set == count) {
-                        if(game.map[i][j] == 0) {
-                            game.map[i][j] = player;
-                            return;
-                        }
-                        else {
-                            System.out.println("Ячейка уже занята!");
-                        }
-                    }
-                    count++;
-                }
-            }
             if(set > 9 || set < 1)
                 System.out.println("Неверный номер ячейки!");
 
+            else {
+
+                for(int i = 0; i < 3; i++) {
+                    for(int j = 0; j < 3; j++) {
+                        if(set == count) {
+                            if(map[i][j] == 0) {
+                                map[i][j] = player;
+
+                                XmlFile.step.setTextContent(String.valueOf(set));
+                                return;
+                            }
+                            else {
+                                System.out.println("Ячейка уже занята!");
+
+                            }
+                        }
+                        count++;
+                    }
+                }
+            }
+
         } catch (Exception e) {
+//e.printStackTrace();
             System.out.println("Неверный номер ячейки!");
         }
+
         System.out.println("Попробуйте ещё раз.");
-        setMap(player);
+        setValue(player);
     }
 
     private static void testMap(int player) {
 
-        if(game.map[0][0] == player &&
-                game.map[1][1] == player &&
-                game.map[2][2] == player) {
+        if(map[0][0] == player &&
+                map[1][1] == player &&
+                map[2][2] == player) {
 
             end = true;
             return;
         }
 
-        if(game.map[0][2] == player &&
-                game.map[1][1] == player &&
-                game.map[2][0] == player) {
+        if(map[0][2] == player &&
+                map[1][1] == player &&
+                map[2][0] == player) {
 
             end = true;
             return;
         }
 
         for(int i = 0; i < 3; i++) {
-            if(game.map[0][i] == player &&
-                    game.map[1][i] == player &&
-                    game.map[2][i] == player) {
+            if(map[0][i] == player &&
+                    map[1][i] == player &&
+                    map[2][i] == player) {
 
                 end = true;
                 return;
             }
 
-            if(game.map[i][0] == player &&
-                    game.map[i][1] == player &&
-                    game.map[i][2] == player) {
+            if(map[i][0] == player &&
+                    map[i][1] == player &&
+                    map[i][2] == player) {
 
                 end = true;
                 return;
@@ -265,12 +327,11 @@ public class Test {
 
         System.out.println("Рейтинг игроков:");
 
-        for(Player person: list) {
+        for(Player person: list)
             System.out.println("Имя-" + person.name
                     + "; Побед-" + person.victories
                     + "; Поражений-" + person.defeats
                     + "; Ничьих-" + person.draws);
-        }
 
         System.out.println("***");
 
@@ -319,7 +380,9 @@ public class Test {
                         Integer.parseInt(line[3].split("-")[1])));
 
             }
-        } catch(Exception ignored) {
+        } catch(Exception e) {
+            System.out.println("Ошибка чтения файла!");
+            e.printStackTrace();
         }
     }
 
@@ -328,28 +391,13 @@ public class Test {
         try(BufferedWriter fileWriter = new BufferedWriter(new FileWriter(System.getProperty("user.dir") + "/rating.txt"))) {
             for(Player person: list) {
                 fileWriter.write("Имя-" + person.name
-                        + "; Побед-" + person.victories
-                        + "; Поражений-" + person.defeats
-                        + "; Ничьих-" + person.draws + "\n");
+                                + "; Побед-" + person.victories
+                                + "; Поражений-" + person.defeats
+                                + "; Ничьих-" + person.draws + "\n");
             }
 
         } catch(Exception e) {
             System.out.println("Ошибка записи файла");
             e.printStackTrace();}
-    }
-}
-
-class Player {
-
-    protected String name;
-    protected int victories;
-    protected int defeats;
-    protected int draws;
-
-    protected Player(String name, int v, int def, int dr) {
-        this.name = name;
-        this.victories = v;
-        this.defeats = def;
-        this.draws = dr;
     }
 }
