@@ -1,1 +1,1 @@
-# run TicTacToe.java
+# run Main.java
