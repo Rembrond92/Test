@@ -1,4 +1,4 @@
-package TicTacToeGame;
+package TicTacToe;
 
 interface Parser {
     

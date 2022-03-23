@@ -1,4 +1,4 @@
-package TicTacToeGame;
+package TicTacToe;
 
 public class Player {
        
