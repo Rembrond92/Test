@@ -1,3 +1,5 @@
+package TicTacToeGame;
+
 interface Parser {
     
     void setPlayers(String one, String two);
