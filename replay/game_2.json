@@ -1,0 +1,72 @@
+{
+	"Gameplay": {
+		"Player": [
+			{
+				"id": "1",
+				"name": "лпплл",
+				"symbol": "X"
+			},
+			{
+				"id": "2",
+				"name": "лала",
+				"symbol": "O"
+			}
+		],
+		"Game": {
+			"Step": [
+				{
+					"num": 1,
+					"playerId": 1,
+					"text": "5"
+				},
+				{
+					"num": 2,
+					"playerId": 2,
+					"text": "1"
+				},
+				{
+					"num": 3,
+					"playerId": 1,
+					"text": "9"
+				},
+				{
+					"num": 4,
+					"playerId": 2,
+					"text": "3"
+				},
+				{
+					"num": 5,
+					"playerId": 1,
+					"text": "2"
+				},
+				{
+					"num": 6,
+					"playerId": 2,
+					"text": "8"
+				},
+				{
+					"num": 7,
+					"playerId": 1,
+					"text": "4"
+				},
+				{
+					"num": 8,
+					"playerId": 2,
+					"text": "7"
+				},
+				{
+					"num": 9,
+					"playerId": 1,
+					"text": "6"
+				}
+			]
+		},
+		"GameResult": {
+			"Player": {
+				"id": "1",
+				"name": "лпплл",
+				"symbol": "X"
+			}
+		}
+	}
+}
