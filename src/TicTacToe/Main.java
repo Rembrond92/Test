@@ -17,7 +17,7 @@ import java.io.InputStreamReader;
 
 public class Main {
     
-    //static Parser parser = new XmlFile();
+    //static ParserGame parser = new XmlFile();
     static ParserGame parser = new JsonFile();
     
     static BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
