@@ -1,3 +1,5 @@
+package TicTacToeGame;
+
 public class TicTacToe {
     
     static int countStep = 0;
